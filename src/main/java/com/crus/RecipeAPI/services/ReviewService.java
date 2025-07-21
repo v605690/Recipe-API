@@ -4,7 +4,6 @@ import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.exceptions.NoSuchReviewException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.models.Review;
-import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.ReviewRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,44 +61,52 @@ public class ReviewService {
         return review.get();
     }
 
+
+    public double getAverageRating(Long recipeId) throws NoSuchRecipeException, NoSuchReviewException{
+        List<Review> reviews = reviewRepo.findReviewById(recipeId);
+
+        int sum = 0;
+        for (Review review : reviews) {
+            sum += review.getRating();
+        }
+        return (double) sum / reviews.size();
+    }
+
     /**
-     1. **Method Signature**:
-     - Returns: - a collection of Review objects `Collection<Review>`
-     - Parameter: - the ID of the recipe whose reviews we want to fetch `Long recipeId`
-     - Throws:
-     - - if the recipe doesn't exist `NoSuchRecipeException`
-     - - if there are no reviews for the recipe `NoSuchReviewException`
-
-     2. **Method Flow**:
-     - First, it attempts to get the recipe using
-     - If the recipe doesn't exist, will be thrown `NoSuchRecipeException`
-
-     `recipeService.getRecipeById(recipeId)`
-     - Then retrieves the reviews collection from the recipe using `recipe.getReviews()`
-     - Checks if the reviews collection is empty
-     - If empty, throws `NoSuchReviewException`
-
-     - If reviews exist, returns the collection of reviews
-
-     3. **JPA Relationship Context**:
-     - The reviews are fetched through the relationship defined in the Recipe class `@OneToMany`
-     - The relationship is managed by JPA with a foreign key in the reviews table `recipe_id`
-
-     This method is part of the service layer and provides a way to access all reviews associated with a
-     particular recipe, with appropriate error handling for cases where either the recipe or reviews
-     don't exist.
+     * 1. **Method Signature**:
+     * - Returns: - a collection of Review objects `Collection<Review>`
+     * - Parameter: - the ID of the recipe whose reviews we want to fetch `Long recipeId`
+     * - Throws:
+     * - - if the recipe doesn't exist `NoSuchRecipeException`
+     * - - if there are no reviews for the recipe `NoSuchReviewException`
+     * <p>
+     * 2. **Method Flow**:
+     * - First, it attempts to get the recipe using
+     * - If the recipe doesn't exist, will be thrown `NoSuchRecipeException`
+     * <p>
+     * `recipeService.getRecipeById(recipeId)`
+     * - Then retrieves the reviews collection from the recipe using `recipe.getReviews()`
+     * - Checks if the reviews collection is empty
+     * - If empty, throws `NoSuchReviewException`
+     * <p>
+     * - If reviews exist, returns the collection of reviews
+     * <p>
+     * 3. **JPA Relationship Context**:
+     * - The reviews are fetched through the relationship defined in the Recipe class `@OneToMany`
+     * - The relationship is managed by JPA with a foreign key in the reviews table `recipe_id`
+     * <p>
+     * This method is part of the service layer and provides a way to access all reviews associated with a
+     * particular recipe, with appropriate error handling for cases where either the recipe or reviews
+     * don't exist.
      */
 
-    public Collection<Review> getReviewByRecipeId(Long recipeId) throws NoSuchRecipeException, NoSuchReviewException {
-        Recipe recipe = recipeService.getRecipeById(recipeId);
+    public double getReviewByRecipeId(Long recipeId) throws NoSuchRecipeException, NoSuchReviewException {
+        List<Review> reviews = reviewRepo.findReviewById(recipeId);
 
-        Collection<Review> reviews = recipe.getReviews();
-
-        if (reviews.isEmpty()) {
-            throw new NoSuchReviewException(
-                    "There are no reviews for this recipe.");
-        }
-        return reviews;
+        return reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
     }
 
     public List<Review> getReviewByUsername(String username)

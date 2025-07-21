@@ -25,32 +25,12 @@ public class RecipeController {
     RecipeService recipeService;
 
     /**
-     1. **Annotations**:
-     - - Handles HTTP POST requests to `/recipes/{id}` `@PostMapping("/{id}")`
-     - - Deserializes the HTTP request body into a object `@RequestBody``Recipe`
-
-     2. **Processing Flow**:
-     - Takes a object as input from the request body `Recipe`
-     - Calls `recipeService.createNewRecipe()` which:
-     - Validates the recipe (must have ingredients and steps)
-     - Saves it to the database
-     - Generates a location URI for the new recipe
-
-     3. **Response Handling**:
-     - On success:
-     - Returns HTTP 201 (Created) status
-     - Includes the location URI in the response header
-     - Returns the created recipe in the response body
-
-     - On validation failure:
-     - Catches `IllegalStateException`
-     - Returns HTTP 400 (Bad Request)
-     - Returns the error message in the response body
-
-     4. **Uses ResponseEntity**:
-     - Provides fine-grained control over the HTTP response
-     - Allows setting status code, headers, and body
-
+     * Creates a new recipe by validating, saving it to the database, generating a location URI,
+     * and returning it in the response. If validation fails, it returns a bad request response with an error message.
+     *
+     * @param recipe the Recipe object to be created and saved; must not be null and must pass validation rules such as having at least one ingredient and step
+     * @return a ResponseEntity containing the created Recipe object and a location URI if successful,
+     *         or an error message if validation fails or another error occurs
      */
     @PostMapping("/{id}")
     public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe) {
@@ -62,6 +42,15 @@ public class RecipeController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    /**
+     * Retrieves a recipe by its unique ID. If the recipe is found, it returns the recipe
+     * with an HTTP 200 (OK) status. If no recipe is found with the given ID, it returns
+     * a 404 (Not Found) response with an error message.
+     *
+     * @param id the unique identifier of the recipe to be retrieved; cannot be null
+     * @return a ResponseEntity containing the recipe object if found, or an error message
+     *         if no recipe is found
+     */
     @GetMapping("/{id}")
     public ResponseEntity<?>  getRecipeById(@PathVariable("id") Long id) {
         try {
@@ -74,6 +63,14 @@ public class RecipeController {
         }
     }
 
+    /**
+     * Retrieves all recipes available in the system. If recipes are found, it returns
+     * a list of recipes with an HTTP 200 (OK) status. If no recipes are available, it
+     * returns a 404 (Not Found) status with an appropriate error message.
+     *
+     * @return a ResponseEntity containing a list of Recipe objects if available,
+     *         or an error message if no recipes are found in the system
+     */
     @GetMapping
     public ResponseEntity<?> getAllRecipes() {
         try {
@@ -85,6 +82,16 @@ public class RecipeController {
         }
     }
 
+    /**
+     * Searches for recipes by their name. If recipes containing the specified name
+     * are found, it returns a list of matching recipes with an HTTP 200 (OK) status.
+     * If no recipes match the search criteria, it returns a 404 (Not Found) response
+     * with an error message.
+     *
+     * @param name the keyword to search for in recipe names; must not be null
+     * @return a ResponseEntity containing a list of Recipe objects if matches are found,
+     *         or an error message if no recipes match the search criteria
+     */
     @GetMapping("/search/{name}")
     ResponseEntity<?> getRecipesByName(@PathVariable("name") String name) {
         try {
@@ -97,6 +104,12 @@ public class RecipeController {
         }
     }
 
+    /**
+     * Deletes a recipe identified by its unique ID. If the recipe is successfully deleted,
+     * it returns a success message with an HTTP 200 (OK) status. If the recipe is not found,
+     * it returns a 400 (Bad Request) response with an error message.
+     *
+     * @param id the unique identifier of the*/
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRecipeById(@PathVariable("id") Long id) {
         try {
@@ -110,6 +123,15 @@ public class RecipeController {
         }
     }
 
+    /**
+     * Updates an existing recipe with the provided details. If the specified recipe
+     * does not exist or the update fails due to validation errors, an appropriate
+     * error response is returned.
+     *
+     * @param updatedRecipe the Recipe object containing updated details; must not be null
+     * @return a ResponseEntity containing the updated Recipe object if successful,
+     *         or an error message if the recipe is not found or validation fails
+     */
     @PatchMapping
     public ResponseEntity<?> updateRecipe(@RequestBody Recipe updatedRecipe) {
         try {
