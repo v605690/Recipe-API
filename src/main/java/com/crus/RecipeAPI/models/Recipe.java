@@ -61,7 +61,7 @@ public class Recipe {
             throw new IllegalStateException("You need at least one step for your recipe!");
         }
     }
-    public void generateLocationURL() {
+    public void generateLocationURI() {
         try {
             locationURI = new URI(
                     ServletUriComponentsBuilder.fromCurrentContextPath()
