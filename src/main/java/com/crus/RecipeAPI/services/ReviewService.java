@@ -10,16 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ReviewService {
-
-    @Autowired
-    RecipeRepo recipeRepo;
-
-    @Autowired
-    ReviewService reviewService;
 
     @Autowired
     private ReviewRepo reviewRepo;
@@ -103,6 +98,17 @@ public class ReviewService {
         if (reviews.isEmpty()) {
             throw new NoSuchReviewException(
                     "There are no reviews for this recipe.");
+        }
+        return reviews;
+    }
+
+    public List<Review> getReviewByUsername(String username)
+            throws NoSuchReviewException {
+        List<Review> reviews = reviewRepo.findByUsername(username);
+
+        if (reviews.isEmpty()) {
+            throw new NoSuchReviewException(
+                    "No reviews could be found for username " + username);
         }
         return reviews;
     }

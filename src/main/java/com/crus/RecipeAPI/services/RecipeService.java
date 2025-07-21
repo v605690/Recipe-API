@@ -63,6 +63,15 @@ public class RecipeService {
      * @throws NoSuchRecipeException if no recipes are found in the repository
      */
     public List<Recipe> getRecipesByName(String name) throws NoSuchRecipeException {
+        List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
+
+        if (matchingRecipes.isEmpty()) {
+            throw new NoSuchRecipeException("No recipes could be found with that name.");
+        }
+        return matchingRecipes;
+    }
+
+    public List<Recipe> getAllRecipes() throws NoSuchRecipeException {
         List<Recipe> recipes = recipeRepo.findAll();
 
         if (recipes.isEmpty()) {
