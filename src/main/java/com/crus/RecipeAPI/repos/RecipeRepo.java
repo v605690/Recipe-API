@@ -10,4 +10,8 @@ import java.util.List;
 public interface RecipeRepo extends JpaRepository<Recipe, Long> {
 
     List<Recipe> findByNameContaining(String name);
+
+    List<Recipe> findBySubmittedBy(String username);
+
+    List<Recipe> findByNameContainingIgnoreCaseAndSubmittedByIgnoreCase(String name, String username);
 }

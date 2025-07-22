@@ -3,18 +3,22 @@ package com.crus.RecipeAPI.services;
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.repos.RecipeRepo;
+import com.crus.RecipeAPI.repos.ReviewRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
 
     @Autowired
     RecipeRepo recipeRepo;
+    @Autowired
+    private ReviewRepo reviewRepo;
 
     /**
      * Creates and saves a new recipe to the repository after performing validation
@@ -52,7 +56,21 @@ public class RecipeService {
         }
         Recipe recipe = recipeOptional.get();
         recipe.generateLocationURI();
-        return recipe;
+        return recipe.recipeWithAverageRating(recipe);
+    }
+
+    public List<Recipe> getRecipesByUser(String username) throws NoSuchRecipeException {
+        List<Recipe> userRecipes = recipeRepo.findBySubmittedBy(username);
+
+        if (userRecipes.isEmpty()) {
+            throw new NoSuchRecipeException("No recipes found for user: " + username);
+        }
+        return userRecipes.stream()
+                .map(recipe -> {
+                   recipe.generateLocationURI();
+                   return recipe.recipeWithAverageRating(recipe);
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -68,7 +86,12 @@ public class RecipeService {
         if (matchingRecipes.isEmpty()) {
             throw new NoSuchRecipeException("No recipes could be found with that name.");
         }
-        return matchingRecipes;
+        return matchingRecipes.stream()
+                .map(recipe -> {
+                    recipe.generateLocationURI();
+                    return recipe.recipeWithAverageRating(recipe);
+                })
+                .collect(Collectors.toList());
     }
 
     public List<Recipe> getAllRecipes() throws NoSuchRecipeException {
@@ -77,8 +100,50 @@ public class RecipeService {
         if (recipes.isEmpty()) {
             throw new NoSuchRecipeException("There are no recipes yet :( feel free to add one.");
         }
-        return recipes;
+        return recipes.stream()
+                .map(recipe -> {
+                    recipe.generateLocationURI();
+                    return recipe.recipeWithAverageRating(recipe);
+                })
+                .collect(Collectors.toList());
     }
+
+
+
+    public List<Recipe> getRecipesByNameAndMinRating(String name, Double minAverageRating) throws NoSuchRecipeException {
+        List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
+
+        List<Recipe> filteredRecipes = matchingRecipes.stream()
+                .map(this::processRecipeWithRatingAndUri)
+                .filter(recipe -> recipe.getAverageRating(recipe.getId()) >= minAverageRating)
+                .toList();
+
+        if (filteredRecipes.isEmpty()) {
+            throw new NoSuchRecipeException("No recipes found with name containing " + name +
+                    " and average rating of " + minAverageRating + " or higher.");
+        }
+        return filteredRecipes;
+    }
+
+    private Recipe processRecipeWithRatingAndUri(Recipe recipe) {
+        recipe.generateLocationURI();
+        return recipe.recipeWithAverageRating(recipe);
+    }
+
+    public List<Recipe> getRecipesByNameAndUser(String name, String username) throws NoSuchRecipeException {
+        List<Recipe> matchingRecipes = recipeRepo.findByNameContainingIgnoreCaseAndSubmittedByIgnoreCase(name, username);
+
+        if (matchingRecipes.isEmpty()) {
+            throw new NoSuchRecipeException("No recipes found with name containing " + name +
+                    "submitted by user " + username);
+    }
+            return matchingRecipes.stream()
+                    .map(recipe -> {
+                        recipe.generateLocationURI();
+                        return recipe.recipeWithAverageRating(recipe);
+                    })
+                    .collect(Collectors.toList());
+        }
 
     /**
      * Deletes a recipe from the repository based on its unique ID.
@@ -127,5 +192,13 @@ public class RecipeService {
                     "in the database. Double check that it is correct. " +
                     "Or maybe you meant to POST a recipe not PATCH one.");
         }
+    }
+    @Transactional
+    public Recipe updateRecipeDifficulty(Long recipeId, int newDifficultyRating) throws NoSuchRecipeException {
+        Recipe recipe = getRecipeById(recipeId);
+        recipe.setDifficultyRating(newDifficultyRating);
+        Recipe updateRecipe = recipeRepo.save(recipe);
+        updateRecipe.generateLocationURI();
+        return updateRecipe;
     }
 }

@@ -61,17 +61,6 @@ public class ReviewService {
         return review.get();
     }
 
-
-    public double getAverageRating(Long recipeId) throws NoSuchRecipeException, NoSuchReviewException{
-        List<Review> reviews = reviewRepo.findReviewById(recipeId);
-
-        int sum = 0;
-        for (Review review : reviews) {
-            sum += review.getRating();
-        }
-        return (double) sum / reviews.size();
-    }
-
     /**
      * 1. **Method Signature**:
      * - Returns: - a collection of Review objects `Collection<Review>`

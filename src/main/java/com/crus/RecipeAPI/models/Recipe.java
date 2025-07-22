@@ -1,5 +1,7 @@
 package com.crus.RecipeAPI.models;
 
+import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
+import com.crus.RecipeAPI.exceptions.NoSuchReviewException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,6 +33,9 @@ public class Recipe {
     @Column(nullable = false)
     private Integer difficultyRating;
 
+    @Column(nullable = false)
+    private String submittedBy;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "recipe_id", nullable = false)
     private Collection<Ingredient> ingredients = new ArrayList<>();
@@ -46,6 +51,9 @@ public class Recipe {
     @Transient
     @JsonIgnore
     private URI locationURI;
+
+    @Transient
+    private Double averageRating;
 
     public void setDifficultyRating(int difficultyRating) {
         if (difficultyRating < 0 || difficultyRating > 10) {
@@ -71,5 +79,23 @@ public class Recipe {
         } catch (URISyntaxException e) {
 
         }
+    }
+    public double getAverageRating(Long id) {
+
+        if (reviews == null || reviews.isEmpty()) {
+            return 0.0;
+        }
+
+        long sum = 0;
+        for (Review review : reviews) {
+            sum += review.getRating();
+        }
+        return (double) sum / reviews.size();
+    }
+
+    public Recipe recipeWithAverageRating(Recipe recipe) {
+        double avgRating = getAverageRating(recipe.getId());
+        recipe.setAverageRating(avgRating);
+        return recipe;
     }
 }

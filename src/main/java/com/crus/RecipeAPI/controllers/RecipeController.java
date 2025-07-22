@@ -32,7 +32,7 @@ public class RecipeController {
      * @return a ResponseEntity containing the created Recipe object and a location URI if successful,
      *         or an error message if validation fails or another error occurs
      */
-    @PostMapping("/{id}")
+    @PostMapping
     public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe) {
         try {
              Recipe insertedRecipe = recipeService.createNewRecipe(recipe);
@@ -96,7 +96,51 @@ public class RecipeController {
     ResponseEntity<?> getRecipesByName(@PathVariable("name") String name) {
         try {
             List<Recipe> matchingRecipes = recipeService.getRecipesByName(name);
+
             return ResponseEntity.ok(matchingRecipes);
+        } catch (NoSuchRecipeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/search/{name}/minRating/{minRating}")
+    public ResponseEntity<?> getRecipesByNameAndMinRating(@PathVariable("name") String name,
+                                                          @PathVariable("minRating") Double minRating) {
+        try {
+            if (minRating < 0 || minRating > 10) {
+                return ResponseEntity.badRequest()
+                        .body("Minimum rating must be between 0 and 10.");
+            }
+            List<Recipe> recipes = recipeService.getRecipesByNameAndMinRating(name, minRating);
+            return ResponseEntity.ok(recipes);
+        } catch (NoSuchRecipeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{username}")
+    ResponseEntity<?> getRecipesByUser(@PathVariable("username") String username) {
+
+        try {
+            List<Recipe> userRecipes = recipeService.getRecipesByUser(username);
+            return ResponseEntity.ok(userRecipes);
+        } catch (NoSuchRecipeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{username}/search/{name}")
+    public ResponseEntity<?> getRecipesByNameAndUser(@PathVariable("username") String username,
+                                                     @PathVariable("name") String name) {
+        try {
+            List<Recipe> recipes = recipeService.getRecipesByNameAndUser(name, username);
+            return ResponseEntity.ok(recipes);
         } catch (NoSuchRecipeException e) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -139,6 +183,19 @@ public class RecipeController {
             return ResponseEntity.ok(returnedUpdatedRecipe);
         } catch (NoSuchRecipeException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PatchMapping("/{id}/difficulty")
+    public ResponseEntity<?> updateRecipeDifficulty(@PathVariable("id") Long id, @RequestParam("rating") int difficultyRating) {
+
+        try {
+            Recipe updatedRecipe = recipeService.updateRecipeDifficulty(id, difficultyRating);
+            return ResponseEntity.ok(updatedRecipe);
+        } catch (NoSuchRecipeException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
         }
     }
 }

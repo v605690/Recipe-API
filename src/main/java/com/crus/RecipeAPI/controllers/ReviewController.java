@@ -32,7 +32,7 @@ public class ReviewController {
     @GetMapping("/recipeRating/{recipeId}")
     public ResponseEntity<?> getAverageReviewRating(@PathVariable("recipeId") Long recipeId) {
         try {
-            double retrievedRating = reviewService.getAverageRating(recipeId);
+            double retrievedRating = reviewService.getReviewByRecipeId(recipeId);
             return ResponseEntity.ok(retrievedRating);
         } catch (IllegalStateException | NoSuchRecipeException | NoSuchReviewException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
