@@ -55,9 +55,26 @@ public class Recipe {
     @Transient
     private Double averageRating;
 
-    public void setDifficultyRating(int difficultyRating) {
+    public void setName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Recipe name cannot be null or empty");
+        }
+        this.name = name.trim();
+    }
+
+    public void setSubmitted(String submittedBy) {
+        if (submittedBy == null || submittedBy.trim().isEmpty()) {
+            throw new IllegalArgumentException("Submitted by cannot be null or empty");
+        }
+        this.submittedBy = submittedBy.trim();
+    }
+
+    public void setDifficultyRating(Integer difficultyRating) {
+        if (difficultyRating == null) {
+            throw new IllegalArgumentException("Difficulty rating cannot be null");
+        }
         if (difficultyRating < 0 || difficultyRating > 10) {
-            throw new IllegalStateException("Difficulty rating must be between 0 and 10.");
+            throw new IllegalArgumentException("Difficulty rating must be between 0 and 10");
         }
         this.difficultyRating = difficultyRating;
     }
@@ -69,6 +86,7 @@ public class Recipe {
             throw new IllegalStateException("You need at least one step for your recipe!");
         }
     }
+
     public void generateLocationURI() {
         try {
             locationURI = new URI(
@@ -77,7 +95,7 @@ public class Recipe {
                             .path(String.valueOf(id))
                             .toUriString());
         } catch (URISyntaxException e) {
-
+            e.getMessage();
         }
     }
     public double getAverageRating(Long id) {
