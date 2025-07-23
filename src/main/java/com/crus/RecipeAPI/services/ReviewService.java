@@ -131,6 +131,17 @@ public class ReviewService {
      */
     public Recipe postNewReview(Review review, Long recipeId) throws NoSuchRecipeException {
         Recipe recipe = recipeService.getRecipeById(recipeId);
+
+        if (recipe.getSubmittedBy().equalsIgnoreCase(review.getUsername())) {
+            throw new IllegalStateException(
+                    "🤔 Hold up there, chef! You can't review your own masterpiece! " +
+                            "That's like giving yourself a high-five in the mirror - technically possible, " +
+                            "but a bit awkward. Ask a friend to try your " + recipe.getName() +
+                            " instead! 👨‍🍳✨"
+
+            );
+        }
+
         recipe.getReviews().add(review);
         recipeService.updateRecipe(recipe, false);
         return recipe;

@@ -59,6 +59,7 @@ public class RecipeService {
         return recipe.recipeWithAverageRating(recipe);
     }
 
+    // get recipes by user
     public List<Recipe> getRecipesByUser(String username) throws NoSuchRecipeException {
         List<Recipe> userRecipes = recipeRepo.findBySubmittedBy(username);
 
@@ -108,8 +109,7 @@ public class RecipeService {
                 .collect(Collectors.toList());
     }
 
-
-
+    // get recipes by name and minimal rating
     public List<Recipe> getRecipesByNameAndMinRating(String name, Double minAverageRating) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
 
@@ -130,6 +130,7 @@ public class RecipeService {
         return recipe.recipeWithAverageRating(recipe);
     }
 
+    // get recipes by name and by the user
     public List<Recipe> getRecipesByNameAndUser(String name, String username) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContainingIgnoreCaseAndSubmittedByIgnoreCase(name, username);
 
@@ -193,6 +194,8 @@ public class RecipeService {
                     "Or maybe you meant to POST a recipe not PATCH one.");
         }
     }
+
+    // update recipe difficulty rating
     @Transactional
     public Recipe updateRecipeDifficulty(Long recipeId, int newDifficultyRating) throws NoSuchRecipeException {
         Recipe recipe = getRecipeById(recipeId);
