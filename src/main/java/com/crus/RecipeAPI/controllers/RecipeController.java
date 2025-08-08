@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,14 +72,12 @@ public class RecipeController {
      * @return a ResponseEntity containing a list of Recipe objects if available,
      *         or an error message if no recipes are found in the system
      */
-    @GetMapping
-    public ResponseEntity<?> getAllRecipes() {
+    @GetMapping({"/", ""})
+    public ResponseEntity<List<Recipe>> getAllRecipes() {
         try {
             return ResponseEntity.ok(recipeService.getAllRecipes());
         } catch (NoSuchRecipeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
+            return ResponseEntity.ok(Collections.emptyList());
         }
     }
 

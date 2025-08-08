@@ -47,6 +47,7 @@ public class RecipeControllerEndPointTest {
                 .andExpect(jsonPath("steps", hasSize(1)));
     }
     @Test
+    @Order(2)
     public void testGetRecipeByIdFailureBehavior() throws Exception {
 
         final long recipeId = 5000;
@@ -64,4 +65,19 @@ public class RecipeControllerEndPointTest {
                                 " could be found.")));
     }
 
+    @Test
+    @Order(3)
+    public void testGetAllRecipesSuccessBehavior() throws Exception {
+        mockMvc
+                .perform(get("/recipes/"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$", hasSize(4)))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("test recipe"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].minutesToMake").value(2))
+                .andExpect(jsonPath("$[2].id").value(3))
+                .andExpect(jsonPath("$[2].difficultyRating").value(5));
+    }
 }
