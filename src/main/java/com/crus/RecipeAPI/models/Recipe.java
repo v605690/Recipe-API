@@ -1,7 +1,5 @@
 package com.crus.RecipeAPI.models;
 
-import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
-import com.crus.RecipeAPI.exceptions.NoSuchReviewException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
