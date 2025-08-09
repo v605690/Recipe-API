@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,11 +37,20 @@ public class RecipeController {
     @PostMapping
     public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe) {
         try {
+            if (recipe.getIngredients() == null) {
+                recipe.setIngredients(new ArrayList<>());
+            }
+            if (recipe.getSteps() == null) {
+                recipe.setSteps(new ArrayList<>());
+            }
+
              Recipe insertedRecipe = recipeService.createNewRecipe(recipe);
              return ResponseEntity.created(
                      insertedRecipe.getLocationURI()).body(insertedRecipe);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
         }
     }
     /**
@@ -73,11 +83,13 @@ public class RecipeController {
      *         or an error message if no recipes are found in the system
      */
     @GetMapping({"/", ""})
-    public ResponseEntity<List<Recipe>> getAllRecipes() {
+    public ResponseEntity<?> getAllRecipes() {
         try {
             return ResponseEntity.ok(recipeService.getAllRecipes());
         } catch (NoSuchRecipeException e) {
-            return ResponseEntity.ok(Collections.emptyList());
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
         }
     }
 

@@ -33,6 +33,8 @@ public class RecipeService {
     public Recipe createNewRecipe(Recipe recipe)
         throws IllegalStateException {
         recipe.validate();
+        recipe.setSubmittedBy("anonymous");
+
         recipe = recipeRepo.save(recipe);
         recipe.generateLocationURI();
         return recipe;

@@ -96,7 +96,7 @@ public class RecipeDataLoader implements CommandLineRunner {
             Recipe recipe4 = Recipe.builder()
                     .name("chocolate and potato chips")
                     .difficultyRating(10)
-                    .minutesToMake(2)
+                    .minutesToMake(1)
                     .ingredients(Set.of(
                             Ingredient.builder()
                                     .name("potato chips")

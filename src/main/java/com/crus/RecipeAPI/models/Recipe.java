@@ -14,8 +14,8 @@ import java.util.Collection;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Recipe {
 
     @Id
@@ -53,6 +53,7 @@ public class Recipe {
     @Transient
     private Double averageRating;
 
+
     public void setName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Recipe name cannot be null or empty");
@@ -65,7 +66,7 @@ public class Recipe {
             throw new IllegalArgumentException("Submitted by cannot be null or empty");
         }
         this.submittedBy = submittedBy.trim();
-    }
+        }
 
     public void setDifficultyRating(Integer difficultyRating) {
         if (difficultyRating == null) {
@@ -78,9 +79,10 @@ public class Recipe {
     }
 
     public void validate() throws IllegalStateException {
-        if (ingredients.isEmpty()) {
+        if (ingredients == null || ingredients.isEmpty()) {
             throw new IllegalStateException("You need at least one ingredient for your recipe!");
-        } else if (steps.isEmpty()) {
+        }
+        if (steps == null || steps.isEmpty()) {
             throw new IllegalStateException("You need at least one step for your recipe!");
         }
     }
