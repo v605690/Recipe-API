@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 @SpringBootApplication
-@Component
 @Profile("test")
 public class RecipeDataLoader implements CommandLineRunner {
 

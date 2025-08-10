@@ -40,13 +40,15 @@ public class RecipeControllerEndPointTest {
 
     @Autowired
     private RecipeRepo recipeRepo;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Test
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
-        final long recipeId = recipeRepo.findAll().get(0).getId();
+        //final long recipeId = recipeRepo.findAll().get(0).getId();
+        final long recipeId = 64;
 
         mockMvc.perform(get("/recipes/" + recipeId))
                 .andDo(print())
@@ -85,7 +87,8 @@ public class RecipeControllerEndPointTest {
         List<Recipe> recipes = recipeRepo.findAll();
 
         mockMvc
-                .perform(get("/recipes/"))
+                .perform(get("/recipes"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", hasSize(4)))
@@ -210,7 +213,7 @@ public class RecipeControllerEndPointTest {
         recipeRepo.deleteAll();
 
         // perform GET all recipes
-        mockMvc.perform(get("/recipes"))
+        this.mockMvc.perform(get("/recipes"))
 
                 .andDo(print())
 
