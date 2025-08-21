@@ -46,6 +46,11 @@ public class Recipe {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Collection<Review> reviews;
 
+    @ManyToOne(optional = false)
+    @JoinColumn
+    @JsonIgnore
+    private CustomUserDetails user;
+
     @Transient
     @JsonIgnore
     private URI locationURI;
@@ -53,6 +58,9 @@ public class Recipe {
     @Transient
     private Double averageRating;
 
+    public String getAuthor() {
+        return user.getUsername();
+    }
 
     public void setName(String name) {
         if (name == null || name.trim().isEmpty()) {

@@ -1,9 +1,8 @@
 package com.crus.RecipeAPI.models;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -26,6 +25,15 @@ public class Review {
 
     @NotNull
     private String description;
+
+    @ManyToOne(optional = false)
+    @JoinColumn
+    @JsonIgnore
+    private CustomUserDetails user;
+
+    public String getAuthor() {
+        return user.getUsername();
+    }
 
     public void setRating(int rating) {
         if (rating <= 0 || rating > 10) {
