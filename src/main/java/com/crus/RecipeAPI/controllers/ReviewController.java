@@ -2,11 +2,15 @@ package com.crus.RecipeAPI.controllers;
 
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.exceptions.NoSuchReviewException;
+import com.crus.RecipeAPI.models.CustomUserDetails;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.models.Review;
 import com.crus.RecipeAPI.services.ReviewService;
+import jdk.jshell.spi.ExecutionControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
@@ -66,18 +70,20 @@ public class ReviewController {
     @PostMapping("/{recipeId}")
     public ResponseEntity<?> postNewReview(
             @RequestBody Review review,
-            @PathVariable("recipeId") Long recipeId) {
+            @PathVariable("recipeId") Long recipeId, Authentication authentication) {
         try {
+            review.setUser((CustomUserDetails) authentication.getPrincipal());
             Recipe insertedRecipe =
                     reviewService.postNewReview(review, recipeId);
             return ResponseEntity.created(
                     insertedRecipe.getLocationURI()).body(insertedRecipe);
-        } catch (NoSuchRecipeException e) {
+        } catch (NoSuchRecipeException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(#id, 'Review', 'delete')")
     public ResponseEntity<?> deleteReviewById(
             @PathVariable("id") Long id) {
         try {
@@ -89,6 +95,7 @@ public class ReviewController {
     }
 
     @PatchMapping
+    @PreAuthorize("hasPermission(#reviewToUpdate.id, 'Reivew', 'edit')")
     public ResponseEntity<?> updateReviewById(
             @RequestBody Review reviewToUpdate) {
         try {

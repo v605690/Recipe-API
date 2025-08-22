@@ -1,11 +1,14 @@
 package com.crus.RecipeAPI.controllers;
 
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
+import com.crus.RecipeAPI.models.CustomUserDetails;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.services.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -35,22 +38,15 @@ public class RecipeController {
      *         or an error message if validation fails or another error occurs
      */
     @PostMapping
-    public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe) {
+    public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe, Authentication authentication) {
         try {
-            if (recipe.getIngredients() == null) {
-                recipe.setIngredients(new ArrayList<>());
-            }
-            if (recipe.getSteps() == null) {
-                recipe.setSteps(new ArrayList<>());
-            }
+           recipe.setUser((CustomUserDetails) authentication.getPrincipal());
 
              Recipe insertedRecipe = recipeService.createNewRecipe(recipe);
              return ResponseEntity.created(
                      insertedRecipe.getLocationURI()).body(insertedRecipe);
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("An unexpected error occurred: " + e.getMessage());
         }
     }
     /**
@@ -166,6 +162,7 @@ public class RecipeController {
      *
      * @param id the unique identifier of the*/
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasPermission(#id, 'Recipe', 'delete')")
     public ResponseEntity<?> deleteRecipeById(@PathVariable("id") Long id) {
         try {
             Recipe deletedRecipe = recipeService.deleteRecipeById(id);
@@ -188,6 +185,7 @@ public class RecipeController {
      *         or an error message if the recipe is not found or validation fails
      */
     @PatchMapping
+    @PreAuthorize("hasPermission(#updatedRecipe.id, 'Recipe', 'edit')")
     public ResponseEntity<?> updateRecipe(@RequestBody Recipe updatedRecipe) {
         try {
             Recipe returnedUpdatedRecipe = recipeService.updateRecipe(updatedRecipe, true);
