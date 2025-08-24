@@ -35,6 +35,13 @@ public class RecipeService {
         recipe.validate();
         recipe.setSubmittedBy("anonymous");
 
+        if (recipe.getIngredients() != null) {
+            recipe.getIngredients().forEach(ingredient -> ingredient.setId(null));
+        }
+        if (recipe.getSteps() != null) {
+            recipe.getSteps().forEach(step -> step.setId(null));
+        }
+
         recipe = recipeRepo.save(recipe);
         recipe.generateLocationURI();
         return recipe;

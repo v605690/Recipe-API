@@ -40,7 +40,13 @@ public class RecipeController {
     @PostMapping
     public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe, Authentication authentication) {
         try {
-           recipe.setUser((CustomUserDetails) authentication.getPrincipal());
+
+            if (authentication != null && authentication.getPrincipal() != null &&
+                    !authentication.getPrincipal().equals("anonymousUser")) {
+                recipe.setUser((CustomUserDetails) authentication.getPrincipal());
+            } else {
+                recipe.setUser(null);
+            }
 
              Recipe insertedRecipe = recipeService.createNewRecipe(recipe);
              return ResponseEntity.created(
