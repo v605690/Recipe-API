@@ -214,7 +214,7 @@ public class RecipeControllerEndPointTest {
                 // confirm status code 400 BAD REQUEST
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-              //  .andExpect(status().isBadRequest())
+                //  .andExpect(status().isBadRequest())
                 // confirm the body only contains a String
                 .andExpect(content().string("You need at least one ingredient for your recipe!"));
     }

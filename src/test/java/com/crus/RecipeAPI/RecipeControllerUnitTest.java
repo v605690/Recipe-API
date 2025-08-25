@@ -55,13 +55,13 @@ public class RecipeControllerUnitTest {
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
 
         // Create mock user for the recipe
-        CustomUserDetails mockUser = TestUtil.createTestUser("testUser");
+        CustomUserDetails mockUser = TestUtil.createTestUser("testUser1");
 
         Recipe mockRecipe = new Recipe();
-        mockRecipe.setId(90L);
+        mockRecipe.setId(16          L);
         mockRecipe.setMinutesToMake(2);
         mockRecipe.setUser(mockUser);
-        mockRecipe.setSubmittedBy("testUser");
+        mockRecipe.setSubmittedBy("testUser1");
         mockRecipe.setReviews(Collections.nCopies(1, mock(Review.class)));
         mockRecipe.setIngredients(Collections.nCopies(1, mock(Ingredient.class)));
         mockRecipe.setSteps(Collections.nCopies(2, mock(Step.class)));
