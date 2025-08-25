@@ -32,12 +32,12 @@ public class RecipeDataLoader implements CommandLineRunner {
         if (recipeRepo.findAll().isEmpty()) {
 
             // Create test users first
-            CustomUserDetails bobUser = createTestUser("bob", "bob@test.com", "Bob Smith");
-            CustomUserDetails sallyUser = createTestUser("Sally", "sally@test.com", "Sally Johnson");
-            CustomUserDetails markUser = createTestUser("Mark", "mark@test.com", "Mark Wilson");
-            CustomUserDetails billyUser = createTestUser("Billy", "billy@test.com", "Billy Brown");
-            CustomUserDetails benUser = createTestUser("ben", "ben@test.com", "Ben Davis");
-            CustomUserDetails reviewerUser = createTestUser("idfk", "idfk@test.com", "Anonymous Reviewer");
+            CustomUserDetails tjUser = createTestUser("TJ", "tj@test.com", "TJ");
+            CustomUserDetails donUser = createTestUser("Don", "don@test.com", "Donny Long");
+            CustomUserDetails davidUser = createTestUser("David", "mark@test.com", "David Wilson");
+            CustomUserDetails jackUser = createTestUser("Jack", "billy@test.com", "Jack Brown");
+            CustomUserDetails janeUser = createTestUser("Jane", "ben@test.com", "Jane Davis");
+            CustomUserDetails reviewerUser = createTestUser("jimmy", "reviewer@test.com", "Anonymous Reviewer");
 
             Ingredient ingredient = Ingredient.builder()
                     .name("flour")
@@ -69,7 +69,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .steps(Set.of(step1, step2))
                     .reviews(Set.of(review))
                     .submittedBy("bob")
-                    .user(bobUser)
+                    .user(tjUser)
                     .build();
 
             recipeRepo.save(recipe1);
@@ -88,7 +88,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .difficultyRating(10)
                     .minutesToMake(2)
                     .submittedBy("Sally")
-                    .user(sallyUser)
+                    .user(donUser)
                     .build();
             recipeRepo.save(recipe2);
 
@@ -105,7 +105,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .difficultyRating(5)
                     .minutesToMake(2)
                     .submittedBy("Mark")
-                    .user(markUser)
+                    .user(davidUser)
                     .build();
 
             recipeRepo.save(recipe3);
@@ -131,10 +131,10 @@ public class RecipeDataLoader implements CommandLineRunner {
                             .username("ben")
                             .rating(10)
                             .description("this stuff is so good")
-                            .user(benUser)
+                            .user(janeUser)
                             .build()))
                     .submittedBy("Billy")
-                    .user(billyUser)
+                    .user(jackUser)
                     .build();
 
             recipeRepo.save(recipe4);

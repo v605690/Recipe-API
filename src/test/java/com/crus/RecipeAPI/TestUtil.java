@@ -40,7 +40,7 @@ public class TestUtil {
      * Creates a test user with the given username and default settings
      */
     public static CustomUserDetails createTestUser(String username) {
-        return createTestUser(username, username + "@test.com", "Test " + username);
+        return createTestUser(username, username + "@gmail.com", "test " + username);
     }
 
     /**
@@ -58,7 +58,7 @@ public class TestUtil {
 
         return CustomUserDetails.builder()
                 .username(username)
-                .password("testPassword123")
+                .password("password")
                 .userMeta(userMeta)
                 .authorities(Collections.singletonList(userRole))
                 .isAccountNonExpired(true)
@@ -73,7 +73,7 @@ public class TestUtil {
      */
     public static CustomUserDetails createTestAdminUser(String username) {
         UserMeta userMeta = UserMeta.builder()
-                .email(username + "@admin.com")
+                .email(username + "@gmail.com")
                 .name("Admin " + username)
                 .build();
 
@@ -83,7 +83,7 @@ public class TestUtil {
 
         return CustomUserDetails.builder()
                 .username(username)
-                .password("adminPassword123")
+                .password("password")
                 .userMeta(userMeta)
                 .authorities(Collections.singletonList(adminRole))
                 .isAccountNonExpired(true)

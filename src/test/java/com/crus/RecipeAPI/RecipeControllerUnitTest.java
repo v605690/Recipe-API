@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -50,26 +51,28 @@ public class RecipeControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @WithMockUser(username = "testUser1", roles = {"USER"})
     @Test
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
 
         // Create mock user for the recipe
+
         CustomUserDetails mockUser = TestUtil.createTestUser("testUser1");
 
         Recipe mockRecipe = new Recipe();
-        mockRecipe.setId(16          L);
-        mockRecipe.setMinutesToMake(2);
+        mockRecipe.setId(16L);
+        mockRecipe.setMinutesToMake(30);
         mockRecipe.setUser(mockUser);
         mockRecipe.setSubmittedBy("testUser1");
         mockRecipe.setReviews(Collections.nCopies(1, mock(Review.class)));
         mockRecipe.setIngredients(Collections.nCopies(1, mock(Ingredient.class)));
-        mockRecipe.setSteps(Collections.nCopies(2, mock(Step.class)));
+        mockRecipe.setSteps(Collections.nCopies(1, mock(Step.class)));
 
         when(recipeService.getRecipeById(anyLong()))
                 .thenReturn(mockRecipe);
 
-        final long recipeId = 90;
+        final long recipeId = 16;
 
         mockMvc.perform(get("/recipes/" + recipeId))
                 .andDo(print())
@@ -77,11 +80,12 @@ public class RecipeControllerUnitTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
 
                 .andExpect(jsonPath("id").value(recipeId))
-                .andExpect(jsonPath("minutesToMake").value(2))
+                .andExpect(jsonPath("minutesToMake").value(30))
                 .andExpect(jsonPath("reviews", hasSize(1)))
                 .andExpect(jsonPath("ingredients", hasSize(1)))
-                .andExpect(jsonPath("steps", hasSize(2)));
+                .andExpect(jsonPath("steps", hasSize(1)));
     }
+    @WithMockUser(username = "testUser1", roles = {"USER"})
     @Test
     @Order(2)
     public void testGetRecipeByIdFailureBehavior() throws Exception {
@@ -104,6 +108,7 @@ public class RecipeControllerUnitTest {
                                 " could be found.")));
     }
 
+    @WithMockUser(username = "testUser1", roles = {"USER"})
     @Test
     @Order(3)
     public void testGetAllRecipesSuccessBehavior() throws Exception {
