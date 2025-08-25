@@ -1,10 +1,8 @@
 package com.crus.RecipeAPI;
 
-import com.crus.RecipeAPI.models.Ingredient;
-import com.crus.RecipeAPI.models.Recipe;
-import com.crus.RecipeAPI.models.Review;
-import com.crus.RecipeAPI.models.Step;
+import com.crus.RecipeAPI.models.*;
 import com.crus.RecipeAPI.repos.RecipeRepo;
+import com.crus.RecipeAPI.repos.UserRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -41,6 +39,9 @@ public class RecipeControllerEndPointTest {
 
     @Autowired
     private RecipeRepo recipeRepo;
+
+    @Autowired
+    private UserRepo userRepo;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -105,6 +106,12 @@ public class RecipeControllerEndPointTest {
     @Order(4)
     public void testCreateNewRecipeSuccessBehavior() throws Exception {
 
+        // Create test users
+        CustomUserDetails recipeAuthor = TestUtil.createTestUser("chef123");
+        CustomUserDetails reviewer = TestUtil.createTestUser("reviewer456");
+        userRepo.save(recipeAuthor);
+        userRepo.save(reviewer);
+
         Ingredient ingredient = Ingredient.builder()
                 .name("brown sugar")
                 .state("dry")
@@ -123,7 +130,8 @@ public class RecipeControllerEndPointTest {
         Review review = Review.builder()
                 .description("was just caramel")
                 .rating(3)
-                .username("idk")
+                .username("reviewer456")
+                .user(reviewer)
                 .build();
 
         Recipe recipe = Recipe.builder()
@@ -133,6 +141,8 @@ public class RecipeControllerEndPointTest {
                 .ingredients(Set.of(ingredient))
                 .steps(Set.of(step1, step2))
                 .reviews(Set.of(review))
+                .submittedBy("chef123")
+                .user(recipeAuthor)
                 .build();
 
         MockHttpServletResponse response = mockMvc
@@ -171,7 +181,7 @@ public class RecipeControllerEndPointTest {
                 // confirm review data
                 .andExpect(jsonPath("reviews", hasSize(1)))
                 .andExpect(jsonPath("reviews[0].username")
-                        .value("idk"))
+                        .value("reviewer456"))
                 .andReturn()
                 .getResponse();
     }
@@ -180,12 +190,17 @@ public class RecipeControllerEndPointTest {
     @Order(5)
     public void testCreateNewRecipeFailureBehavior() throws Exception {
 
+        // Create test user for the recipe
+        CustomUserDetails testUser = TestUtil.createTestUser("tester");
+        userRepo.save(testUser);
+
         Recipe recipe = new Recipe();
 
         recipe.setName("Test Recipe");
         recipe.setMinutesToMake(10);
         recipe.setDifficultyRating(5);
         recipe.setSubmittedBy("tester");
+        recipe.setUser(testUser);
 
         recipe.setIngredients(new ArrayList<>());
         recipe.setSteps(new ArrayList<>());

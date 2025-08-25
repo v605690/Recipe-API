@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
 @Getter
@@ -46,6 +47,7 @@ public class Recipe {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Collection<Review> reviews;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @ManyToOne(optional = false)
     @JoinColumn
     @JsonIgnore
@@ -58,8 +60,12 @@ public class Recipe {
     @Transient
     private Double averageRating;
 
+//    public String getAuthor() {
+//        return user.getUsername();
+//    }
+
     public String getAuthor() {
-        return user.getUsername();
+        return user != null ? user.getUsername() : "anonymous";
     }
 
     public void setName(String name) {

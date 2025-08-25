@@ -1,16 +1,16 @@
 package com.crus.RecipeAPI.services;
 
-import com.crus.RecipeAPI.models.Ingredient;
-import com.crus.RecipeAPI.models.Recipe;
-import com.crus.RecipeAPI.models.Review;
-import com.crus.RecipeAPI.models.Step;
+import com.crus.RecipeAPI.models.*;
 import com.crus.RecipeAPI.repos.RecipeRepo;
+import com.crus.RecipeAPI.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.Set;
 
 @SpringBootApplication
@@ -20,10 +20,24 @@ public class RecipeDataLoader implements CommandLineRunner {
     @Autowired
     RecipeRepo recipeRepo;
 
+    @Autowired
+    UserRepo userRepo;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) throws Exception {
         System.out.println("STARTING WITH TEST DATABASE SETUP");
         if (recipeRepo.findAll().isEmpty()) {
+
+            // Create test users first
+            CustomUserDetails bobUser = createTestUser("bob", "bob@test.com", "Bob Smith");
+            CustomUserDetails sallyUser = createTestUser("Sally", "sally@test.com", "Sally Johnson");
+            CustomUserDetails markUser = createTestUser("Mark", "mark@test.com", "Mark Wilson");
+            CustomUserDetails billyUser = createTestUser("Billy", "billy@test.com", "Billy Brown");
+            CustomUserDetails benUser = createTestUser("ben", "ben@test.com", "Ben Davis");
+            CustomUserDetails reviewerUser = createTestUser("idfk", "idfk@test.com", "Anonymous Reviewer");
 
             Ingredient ingredient = Ingredient.builder()
                     .name("flour")
@@ -44,6 +58,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .description("tasted pretty bad")
                     .rating(2)
                     .username("idfk")
+                    .user(reviewerUser)
                     .build();
 
             Recipe recipe1 = Recipe.builder()
@@ -54,6 +69,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .steps(Set.of(step1, step2))
                     .reviews(Set.of(review))
                     .submittedBy("bob")
+                    .user(bobUser)
                     .build();
 
             recipeRepo.save(recipe1);
@@ -72,6 +88,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .difficultyRating(10)
                     .minutesToMake(2)
                     .submittedBy("Sally")
+                    .user(sallyUser)
                     .build();
             recipeRepo.save(recipe2);
 
@@ -88,6 +105,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .difficultyRating(5)
                     .minutesToMake(2)
                     .submittedBy("Mark")
+                    .user(markUser)
                     .build();
 
             recipeRepo.save(recipe3);
@@ -113,12 +131,38 @@ public class RecipeDataLoader implements CommandLineRunner {
                             .username("ben")
                             .rating(10)
                             .description("this stuff is so good")
+                            .user(benUser)
                             .build()))
                     .submittedBy("Billy")
+                    .user(billyUser)
                     .build();
 
             recipeRepo.save(recipe4);
             System.out.println("FINISHED TEST DATABASE SETUP");
         }
+    }
+
+    private CustomUserDetails createTestUser(String username, String email, String name) {
+        UserMeta userMeta = UserMeta.builder()
+                .email(email)
+                .name(name)
+                .build();
+
+        Role userRole = Role.builder()
+                .role(Role.Roles.ROLE_USER)
+                .build();
+
+        CustomUserDetails user = CustomUserDetails.builder()
+                .username(username)
+                .password(passwordEncoder.encode("testPassword123"))
+                .userMeta(userMeta)
+                .authorities(Collections.singletonList(userRole))
+                .isAccountNonExpired(true)
+                .isAccountNonLocked(true)
+                .isCredentialsNonExpired(true)
+                .isEnabled(true)
+                .build();
+
+        return userRepo.save(user);
     }
 }

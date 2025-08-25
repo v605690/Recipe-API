@@ -84,9 +84,10 @@ public class RecipeController {
      * @return a ResponseEntity containing a list of Recipe objects if available,
      *         or an error message if no recipes are found in the system
      */
-    @GetMapping({"/", ""})
+    @GetMapping
     public ResponseEntity<?> getAllRecipes() {
         try {
+            List<Recipe> allRecipes = recipeService.getAllRecipes();
             return ResponseEntity.ok(recipeService.getAllRecipes());
         } catch (NoSuchRecipeException e) {
             return ResponseEntity

@@ -2,10 +2,7 @@ package com.crus.RecipeAPI;
 
 import com.crus.RecipeAPI.controllers.RecipeController;
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
-import com.crus.RecipeAPI.models.Ingredient;
-import com.crus.RecipeAPI.models.Recipe;
-import com.crus.RecipeAPI.models.Review;
-import com.crus.RecipeAPI.models.Step;
+import com.crus.RecipeAPI.models.*;
 
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.services.RecipeService;
@@ -57,9 +54,14 @@ public class RecipeControllerUnitTest {
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
 
+        // Create mock user for the recipe
+        CustomUserDetails mockUser = TestUtil.createTestUser("testUser");
+
         Recipe mockRecipe = new Recipe();
         mockRecipe.setId(90L);
         mockRecipe.setMinutesToMake(2);
+        mockRecipe.setUser(mockUser);
+        mockRecipe.setSubmittedBy("testUser");
         mockRecipe.setReviews(Collections.nCopies(1, mock(Review.class)));
         mockRecipe.setIngredients(Collections.nCopies(1, mock(Ingredient.class)));
         mockRecipe.setSteps(Collections.nCopies(2, mock(Step.class)));
@@ -106,12 +108,19 @@ public class RecipeControllerUnitTest {
     @Order(3)
     public void testGetAllRecipesSuccessBehavior() throws Exception {
 
+        // Create mock users for the recipes
+        CustomUserDetails user1 = TestUtil.createTestUser("user1");
+        CustomUserDetails user2 = TestUtil.createTestUser("user2");
+        CustomUserDetails user3 = TestUtil.createTestUser("user3");
+        CustomUserDetails user4 = TestUtil.createTestUser("user4");
+        CustomUserDetails user5 = TestUtil.createTestUser("user5");
+
         List<Recipe> mockRecipes = Arrays.asList(
-                Recipe.builder().id(1L).name("test recipe").minutesToMake(2).difficultyRating(5).build(),
-                Recipe.builder().id(2L).name("recipe 2").minutesToMake(2).difficultyRating(4).build(),
-                Recipe.builder().id(3L).name("recipe 3").minutesToMake(45).difficultyRating(5).build(),
-                Recipe.builder().id(4L).name("recipe 4").minutesToMake(30).difficultyRating(2).build(),
-                Recipe.builder().id(5L).name("recipe 5").minutesToMake(25).difficultyRating(6).build()
+                Recipe.builder().id(1L).name("test recipe").minutesToMake(2).difficultyRating(5).user(user1).submittedBy("user1").build(),
+                Recipe.builder().id(2L).name("recipe 2").minutesToMake(2).difficultyRating(4).user(user2).submittedBy("user2").build(),
+                Recipe.builder().id(3L).name("recipe 3").minutesToMake(45).difficultyRating(5).user(user3).submittedBy("user3").build(),
+                Recipe.builder().id(4L).name("recipe 4").minutesToMake(30).difficultyRating(2).user(user4).submittedBy("user4").build(),
+                Recipe.builder().id(5L).name("recipe 5").minutesToMake(25).difficultyRating(6).user(user5).submittedBy("user5").build()
         );
 
         when(recipeService.getAllRecipes()).thenReturn(mockRecipes);
