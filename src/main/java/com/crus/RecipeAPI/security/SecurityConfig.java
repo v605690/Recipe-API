@@ -24,7 +24,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css", "/js").permitAll()
 
-                        //.requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
 
                         // allow all requests to read recipes and reviews
                         .requestMatchers(
@@ -32,8 +32,8 @@ public class SecurityConfig {
                                 "/recipes/**", "/reviews")
                         .permitAll()
                         // allow creation of new recipes and reviews
+                        .requestMatchers(HttpMethod.GET, "/recipes/**", "/reviews").permitAll()
                         .requestMatchers(HttpMethod.POST,"/recipes").authenticated()
-
                         .requestMatchers(HttpMethod.POST, "/reviews").permitAll()
                         // all other requests should be authenticated
                         .anyRequest().authenticated())

@@ -33,6 +33,16 @@ public class ReviewController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllRecipeReview() {
+        try {
+            List<Review> allReviews = reviewService.getAllReviews();
+            return ResponseEntity.ok(allReviews);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/recipeRating/{recipeId}")
     public ResponseEntity<?> getAverageReviewRating(@PathVariable("recipeId") Long recipeId) {
         try {

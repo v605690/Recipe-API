@@ -8,7 +8,6 @@ import com.crus.RecipeAPI.repos.ReviewRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -208,5 +207,9 @@ public class ReviewService {
         }
         reviewRepo.save(reviewToUpdate);
         return reviewToUpdate;
+    }
+
+    public List<Review> getAllReviews() {
+       return reviewRepo.findAll();
     }
 }
