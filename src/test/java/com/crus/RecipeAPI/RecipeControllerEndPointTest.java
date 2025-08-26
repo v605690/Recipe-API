@@ -4,21 +4,23 @@ import com.crus.RecipeAPI.models.*;
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.UserRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -47,7 +49,40 @@ public class RecipeControllerEndPointTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @WithMockUser(username = "testUser1", roles = {"USER"})
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void setup() {
+        // Check if user already exists
+        if (!userRepo.existsByUsername("testuser1")) {
+
+        // Create and save user
+        UserMeta userMeta = UserMeta.builder()
+                .email("testuser1@gmail.com")
+                .name("Test User 1")
+                .build();
+
+        Role userRole = Role.builder()
+                .role(Role.Roles.ROLE_USER)
+                .build();
+
+        CustomUserDetails user = CustomUserDetails.builder()
+                .username("testuser1")
+                .password(passwordEncoder.encode("password")) // Always encode!
+                .userMeta(userMeta)
+                .authorities(Collections.singletonList(userRole))
+                .isAccountNonExpired(true)
+                .isAccountNonLocked(true)
+                .isCredentialsNonExpired(true)
+                .isEnabled(true)
+                .build();
+
+        userRepo.save(user);
+        }
+    }
+
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
@@ -65,7 +100,7 @@ public class RecipeControllerEndPointTest {
                 .andExpect(jsonPath("ingredients", hasSize(2)))
                 .andExpect(jsonPath("steps", hasSize(1)));
     }
-    @WithMockUser(username = "testUser1", roles = {"USER"})
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(2)
     public void testGetRecipeByIdFailureBehavior() throws Exception {
@@ -84,7 +119,7 @@ public class RecipeControllerEndPointTest {
                         "No recipe with ID " + recipeId +
                                 " could be found.")));
     }
-    @WithMockUser(username = "testUser1", roles = {"USER"})
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(3)
     public void testGetAllRecipesSuccessBehavior() throws Exception {
@@ -104,14 +139,15 @@ public class RecipeControllerEndPointTest {
                 .andExpect(jsonPath("$[2].id").value(recipes.get(2).getId()))
                 .andExpect(jsonPath("$[2].difficultyRating").value(5));
     }
-    @WithMockUser(username = "testUser1", roles = {"USER"})
+
+    @WithUserDetails(value = "testuser1", setupBefore = TestExecutionEvent.TEST_EXECUTION)
     @Test
     @Order(4)
     public void testCreateNewRecipeSuccessBehavior() throws Exception {
 
         // Create test users
-        CustomUserDetails recipeAuthor = TestUtil.createTestUser("testuser2");
-        CustomUserDetails reviewer = TestUtil.createTestUser("testuser2");
+        CustomUserDetails recipeAuthor = TestUtil.createTestUser("testuser1");
+        CustomUserDetails reviewer = TestUtil.createTestUser("reviewer");
         userRepo.save(recipeAuthor);
         userRepo.save(reviewer);
 
@@ -133,7 +169,7 @@ public class RecipeControllerEndPointTest {
         Review review = Review.builder()
                 .description("was just caramel")
                 .rating(3)
-                .username("reviewer456")
+                .username("reviewer")
                 .user(reviewer)
                 .build();
 
@@ -184,17 +220,17 @@ public class RecipeControllerEndPointTest {
                 // confirm review data
                 .andExpect(jsonPath("reviews", hasSize(1)))
                 .andExpect(jsonPath("reviews[0].username")
-                        .value("reviewer456"))
+                        .value("reviewer"))
                 .andReturn()
                 .getResponse();
     }
-
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(5)
     public void testCreateNewRecipeFailureBehavior() throws Exception {
 
         // Create test user for the recipe
-        CustomUserDetails testUser = TestUtil.createTestUser("tester");
+        CustomUserDetails testUser = TestUtil.createTestUser("testuser1");
         userRepo.save(testUser);
 
         Recipe recipe = new Recipe();
@@ -202,7 +238,7 @@ public class RecipeControllerEndPointTest {
         recipe.setName("Test Recipe");
         recipe.setMinutesToMake(10);
         recipe.setDifficultyRating(5);
-        recipe.setSubmittedBy("tester");
+        recipe.setSubmittedBy("testuser1");
         recipe.setUser(testUser);
 
         recipe.setIngredients(new ArrayList<>());

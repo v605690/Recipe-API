@@ -22,6 +22,8 @@ public class Review {
     @NotNull
     private String username;
 
+    private String author;
+
     private int rating;
 
     @NotNull

@@ -21,5 +21,6 @@ public class UserMeta {
 
     @Column(nullable = false)
     private String name;
+
 }
 

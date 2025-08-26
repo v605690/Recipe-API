@@ -7,4 +7,7 @@ public interface UserRepo
         extends JpaRepository<CustomUserDetails, Long> {
 
     CustomUserDetails findByUsername(String username);
+
+    boolean existsByUsername(String testuser1);
+
 }
