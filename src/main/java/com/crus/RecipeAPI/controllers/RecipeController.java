@@ -203,6 +203,7 @@ public class RecipeController {
     }
 
     @PatchMapping("/{id}/difficulty")
+    @PreAuthorize("hasPermission(#id, 'Recipe', 'edit')")
     public ResponseEntity<?> updateRecipeDifficulty(@PathVariable("id") Long id, @RequestParam("rating") int difficultyRating) {
 
         try {
