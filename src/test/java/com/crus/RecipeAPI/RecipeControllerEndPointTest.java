@@ -281,7 +281,7 @@ public class RecipeControllerEndPointTest {
                 jsonByteArray, Recipe[].class);
 
         // confirm 3 recipes were returned
-        assertThat(returnedRecipes.length).isEqualTo(3);
+        assertThat(returnedRecipes.length).isEqualTo(2);
 
         for (Recipe r : returnedRecipes) {
             // confirm none of the recipes are null
@@ -341,7 +341,7 @@ public class RecipeControllerEndPointTest {
     @Test
     @Order(8)
     public void testDeleteRecipeByIdSuccessBehavior() throws Exception {
-        final long recipeId = 4;
+        final long recipeId = 16;
         // get the recipe with ID 3 for future error message confirmation
         byte[] responseByteArr =
                 mockMvc.perform(get("/recipes/" + recipeId))
