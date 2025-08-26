@@ -143,4 +143,18 @@ public class RecipeControllerUnitTest {
                 .andExpect(jsonPath("$[2].id").value(mockRecipes.get(2).getId()))
                 .andExpect(jsonPath("$[2].difficultyRating").value(5));
     }
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    @Order(4)
+    public void postRecipe() throws Exception {
+        Recipe recipe = new Recipe();
+        recipe.setName("test recipe");
+        recipe.setMinutesToMake(2);
+        recipe.setDifficultyRating(5);
+        recipe.setSubmittedBy("testUser1");
+        recipe.setUser(TestUtil.createTestUser("testUser1"));
+        recipe.setIngredients(Collections.nCopies(1, mock(Ingredient.class)));
+        recipe.setSteps(Collections.nCopies(1, mock(Step.class)));
+        recipe.setReviews(Collections.nCopies(1, mock(Review.class)));
+    }
 }
