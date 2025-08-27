@@ -27,12 +27,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
 
                         // allow all requests to read recipes and reviews
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/recipes/**", "/reviews")
-                        .permitAll()
-                        // allow creation of new recipes and reviews
                         .requestMatchers(HttpMethod.GET, "/recipes/**", "/reviews").permitAll()
+                        // allow creation of new recipes and reviews
                         .requestMatchers(HttpMethod.POST,"/recipes").authenticated()
                         .requestMatchers(HttpMethod.POST, "/reviews").permitAll()
                         // all other requests should be authenticated

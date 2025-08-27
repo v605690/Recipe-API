@@ -37,9 +37,9 @@ public class UserController {
         try {
             CustomUserDetails testUser = CustomUserDetails.builder()
                     .username(username)
-                    .password("password123")
+                    .password("password")
                     .userMeta(UserMeta.builder()
-                            .email(username + "@test.com")
+                            .email(username + "@gmail.com")
                             .name("Test " + username)
                             .build())
                     .build();

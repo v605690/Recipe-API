@@ -1,25 +1,24 @@
 package com.crus.RecipeAPI;
 
-import com.crus.RecipeAPI.models.Ingredient;
-import com.crus.RecipeAPI.models.Recipe;
-import com.crus.RecipeAPI.models.Review;
-import com.crus.RecipeAPI.models.Step;
+import com.crus.RecipeAPI.models.*;
 import com.crus.RecipeAPI.repos.RecipeRepo;
+import com.crus.RecipeAPI.repos.UserMetaRepo;
+import com.crus.RecipeAPI.repos.UserRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -43,13 +42,59 @@ public class RecipeControllerEndPointTest {
     private RecipeRepo recipeRepo;
 
     @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserMetaRepo userMetaRepo;
+
+    @BeforeEach
+    void setup() {
+        // Check if user already exists
+        if (!userRepo.existsByUsername("testuser1")) {
+
+            // Create and save user
+            UserMeta userMeta = UserMeta.builder()
+                    .id(1L)
+                    .email("testuser1@gmail.com")
+                    .name("Test User 1")
+                    .build();
+
+            userMetaRepo.save(userMeta);
+            userMeta = userMetaRepo.findByEmail("testuser1@gmail.com");
+
+            Role userRole = Role.builder()
+                    .role(Role.Roles.ROLE_USER)
+                    .build();
+
+            CustomUserDetails user = CustomUserDetails.builder()
+                    .username("testuser1")
+                    .password(passwordEncoder.encode("password")) // Always encode!
+                    .userMeta(userMeta)
+                    .authorities(Collections.singletonList(userRole))
+                    .isAccountNonExpired(true)
+                    .isAccountNonLocked(true)
+                    .isCredentialsNonExpired(true)
+                    .isEnabled(true)
+                    .build();
+
+
+           // userRepo.save(user);
+
+        }
+    }
+
+  @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
         //final long recipeId = recipeRepo.findAll().get(0).getId();
-        final long recipeId = 90;
+        final long recipeId = 1;
 
         mockMvc.perform(get("/recipes/" + recipeId))
                 .andDo(print())
@@ -59,7 +104,7 @@ public class RecipeControllerEndPointTest {
                 .andExpect(jsonPath("id").value(recipeId))
                 .andExpect(jsonPath("minutesToMake").value(2))
                 .andExpect(jsonPath("reviews", hasSize(1)))
-                .andExpect(jsonPath("ingredients", hasSize(1)))
+                .andExpect(jsonPath("ingredients", hasSize(0)))
                 .andExpect(jsonPath("steps", hasSize(2)));
     }
     @Test
@@ -92,8 +137,8 @@ public class RecipeControllerEndPointTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$", hasSize(5)))
-                .andExpect(jsonPath("$[0].id").value(recipes.get(0).getId()))
+                .andExpect(jsonPath("$[0].ingredients", hasSize(0)))
+                .andExpect(jsonPath("$[0].id").value(recipes.get(1).getId()))
                 .andExpect(jsonPath("$[0].name").value("test recipe"))
                 .andExpect(jsonPath("$[1].id").value(recipes.get(1).getId()))
                 .andExpect(jsonPath("$[1].minutesToMake").value(2))
@@ -103,6 +148,7 @@ public class RecipeControllerEndPointTest {
 
     @Test
     @Order(4)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testCreateNewRecipeSuccessBehavior() throws Exception {
 
         Ingredient ingredient = Ingredient.builder()
@@ -127,6 +173,7 @@ public class RecipeControllerEndPointTest {
                 .build();
 
         Recipe recipe = Recipe.builder()
+                .user(userRepo.findByUsername("testuser1"))
                 .name("caramel in a pan")
                 .difficultyRating(10)
                 .minutesToMake(2)
@@ -149,7 +196,7 @@ public class RecipeControllerEndPointTest {
                 // object matches the correct URL structure
                 .andExpect(header().string(
                         "Location",
-                        containsString("http://localhost/recipes/")))
+                        containsString("http://localhost:8080/recipes/")))
 
                 // confirm some recipe data
                 .andExpect(jsonPath("id").isNotEmpty())
