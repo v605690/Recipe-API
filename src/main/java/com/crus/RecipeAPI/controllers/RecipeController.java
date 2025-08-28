@@ -1,8 +1,8 @@
 package com.crus.RecipeAPI.controllers;
 
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
-import com.crus.RecipeAPI.models.CustomUserDetails;
-import com.crus.RecipeAPI.models.Recipe;
+import com.crus.RecipeAPI.models.*;
+import com.crus.RecipeAPI.repos.UserRepo;
 import com.crus.RecipeAPI.services.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,8 @@ public class RecipeController {
 
     @Autowired
     RecipeService recipeService;
+    @Autowired
+    private UserRepo userRepo;
 
     /**
      * Creates a new recipe by validating, saving it to the database, generating a location URI,
@@ -39,21 +43,19 @@ public class RecipeController {
      */
     @PostMapping
     public ResponseEntity<?> createNewRecipe(@RequestBody Recipe recipe, Authentication authentication) {
-        try {
 
-            if (authentication != null && authentication.getPrincipal() != null &&
-                    !authentication.getPrincipal().equals("anonymousUser")) {
-                recipe.setUser((CustomUserDetails) authentication.getPrincipal());
-            } else {
-                recipe.setUser(null);
+        String username = authentication.getName();
+        CustomUserDetails user = userRepo.findByUsername(username);
+        recipe.setUser(user);
+
+        if (recipe.getReviews() != null) {
+            for (Review review : recipe.getReviews()) {
+                review.setUser(user);
             }
-
-             Recipe insertedRecipe = recipeService.createNewRecipe(recipe);
-             return ResponseEntity.created(
-                     insertedRecipe.getLocationURI()).body(insertedRecipe);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("An unexpected error occurred: " + e.getMessage());
         }
+
+        Recipe savedRecipe = recipeService.createNewRecipe(recipe);
+        return ResponseEntity.created(savedRecipe.getLocationURI()).body(savedRecipe);
     }
     /**
      * Retrieves a recipe by its unique ID. If the recipe is found, it returns the recipe

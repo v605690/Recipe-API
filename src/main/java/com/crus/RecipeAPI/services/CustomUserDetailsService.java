@@ -29,16 +29,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        CustomUserDetails optionalUser =
+        CustomUserDetails user =
                 userRepo.findByUsername(username);
 
-        if (optionalUser == null) {
+        if (user == null) {
             throw new UsernameNotFoundException(username +
                     " is not a valid username! " +
                     "Check for typos and try again.");
         }
 
-        return optionalUser;
+        return user;
     }
 
     @Transactional(readOnly = true)

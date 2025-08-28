@@ -6,6 +6,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,12 +21,11 @@ public class SecurityConfig {
         http
                 // disable CSRF for Postman usage
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // permit all requests to access CSS and JavaScript
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css", "/js").permitAll()
-
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
-
                         // allow all requests to read recipes and reviews
                         .requestMatchers(HttpMethod.GET, "/recipes/**", "/reviews").permitAll()
                         // allow creation of new recipes and reviews

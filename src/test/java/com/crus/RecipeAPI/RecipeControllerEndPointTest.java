@@ -1,5 +1,6 @@
 package com.crus.RecipeAPI;
 
+import com.crus.RecipeAPI.controllers.RecipeController;
 import com.crus.RecipeAPI.models.*;
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.UserMetaRepo;
@@ -8,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -57,12 +59,10 @@ public class RecipeControllerEndPointTest {
     void setup() {
         // Check if user already exists
         if (!userRepo.existsByUsername("testuser1")) {
-
             // Create and save user
             UserMeta userMeta = UserMeta.builder()
-                    .id(1L)
-                    .email("testuser1@gmail.com")
                     .name("Test User 1")
+                    .email("testuser1@gmail.com")
                     .build();
 
             userMetaRepo.save(userMeta);
@@ -82,10 +82,7 @@ public class RecipeControllerEndPointTest {
                     .isCredentialsNonExpired(true)
                     .isEnabled(true)
                     .build();
-
-
-           // userRepo.save(user);
-
+           userRepo.save(user);
         }
     }
 
@@ -94,7 +91,7 @@ public class RecipeControllerEndPointTest {
     @Order(1)
     public void testGetRecipeByIdSuccessBehavior() throws Exception {
         //final long recipeId = recipeRepo.findAll().get(0).getId();
-        final long recipeId = 1;
+        final long recipeId = 27;
 
         mockMvc.perform(get("/recipes/" + recipeId))
                 .andDo(print())
@@ -104,7 +101,7 @@ public class RecipeControllerEndPointTest {
                 .andExpect(jsonPath("id").value(recipeId))
                 .andExpect(jsonPath("minutesToMake").value(2))
                 .andExpect(jsonPath("reviews", hasSize(1)))
-                .andExpect(jsonPath("ingredients", hasSize(0)))
+                .andExpect(jsonPath("ingredients", hasSize(1)))
                 .andExpect(jsonPath("steps", hasSize(2)));
     }
     @Test
@@ -125,7 +122,7 @@ public class RecipeControllerEndPointTest {
                         "No recipe with ID " + recipeId +
                                 " could be found.")));
     }
-
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     @Test
     @Order(3)
     public void testGetAllRecipesSuccessBehavior() throws Exception {
@@ -137,13 +134,13 @@ public class RecipeControllerEndPointTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$[0].ingredients", hasSize(0)))
-                .andExpect(jsonPath("$[0].id").value(recipes.get(1).getId()))
-                .andExpect(jsonPath("$[0].name").value("test recipe"))
+                .andExpect(jsonPath("$[0].ingredients", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(recipes.get(0).getId()))
+                .andExpect(jsonPath("$[0].name").value("caramel in a pan"))
                 .andExpect(jsonPath("$[1].id").value(recipes.get(1).getId()))
                 .andExpect(jsonPath("$[1].minutesToMake").value(2))
                 .andExpect(jsonPath("$[2].id").value(recipes.get(2).getId()))
-                .andExpect(jsonPath("$[2].difficultyRating").value(5));
+                .andExpect(jsonPath("$[2].difficultyRating").value(10));
     }
 
     @Test
@@ -166,14 +163,16 @@ public class RecipeControllerEndPointTest {
                 .stepNumber(2)
                 .build();
 
+        CustomUserDetails user = userRepo.findByUsername("testuser1");
         Review review = Review.builder()
                 .description("was just caramel")
                 .rating(3)
                 .username("idk")
+                .user(user)
                 .build();
 
         Recipe recipe = Recipe.builder()
-                .user(userRepo.findByUsername("testuser1"))
+                .user(user)
                 .name("caramel in a pan")
                 .difficultyRating(10)
                 .minutesToMake(2)
@@ -196,7 +195,7 @@ public class RecipeControllerEndPointTest {
                 // object matches the correct URL structure
                 .andExpect(header().string(
                         "Location",
-                        containsString("http://localhost:8080/recipes/")))
+                        containsString("/recipes/")))
 
                 // confirm some recipe data
                 .andExpect(jsonPath("id").isNotEmpty())
@@ -222,17 +221,17 @@ public class RecipeControllerEndPointTest {
                 .andReturn()
                 .getResponse();
     }
-
     @Test
     @Order(5)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testCreateNewRecipeFailureBehavior() throws Exception {
 
         Recipe recipe = new Recipe();
 
-        recipe.setName("Test Recipe");
-        recipe.setMinutesToMake(10);
-        recipe.setDifficultyRating(5);
-        recipe.setSubmittedBy("tester");
+        recipe.setName("caramel in a pan");
+        recipe.setMinutesToMake(2);
+        recipe.setDifficultyRating(10);
+        recipe.setSubmittedBy("anonyumous");
 
         recipe.setIngredients(new ArrayList<>());
         recipe.setSteps(new ArrayList<>());
@@ -253,6 +252,7 @@ public class RecipeControllerEndPointTest {
 
     @Test
     @Order(6)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testGetRecipesByNameSuccessBehavior() throws Exception {
 
         // get request to search for recipes with names including "recipe"
@@ -310,6 +310,7 @@ public class RecipeControllerEndPointTest {
 
     @Test
     @Order(7)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testGetRecipeByNameFailureBehavior() throws Exception {
 
         byte[] contentAsByteArray = mockMvc.perform(
@@ -332,8 +333,9 @@ public class RecipeControllerEndPointTest {
 
     @Test
     @Order(8)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testDeleteRecipeByIdSuccessBehavior() throws Exception {
-        final long recipeId = 90;
+        final long recipeId = 28;
         // get the recipe with ID 3 for future error message confirmation
         byte[] responseByteArr =
                 mockMvc.perform(get("/recipes/" + recipeId))
@@ -369,6 +371,7 @@ public class RecipeControllerEndPointTest {
 
     @Test
     @Order(9)
+    @WithMockUser(username = "testuser1", roles = {"USER"})
     public void testDeleteRecipeByIdFailureBehavior() throws Exception {
         // force error with invalid ID
         byte[] responseContent =

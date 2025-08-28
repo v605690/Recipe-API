@@ -35,7 +35,7 @@ public class Review {
     private CustomUserDetails user;
 
     public String getAuthor() {
-        return user.getUsername();
+        return user != null ? user.getUsername() : "anonymous";
     }
 
     public void setRating(int rating) {

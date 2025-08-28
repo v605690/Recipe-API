@@ -32,10 +32,10 @@ public class RecipeDataLoader implements CommandLineRunner {
         System.out.println("STARTING WITH TEST DATABASE SETUP");
 
         UserMeta userMeta =
-                UserMeta.builder().name("test user").email("email@email.com").build();
+                UserMeta.builder().name("test user").email("testuser1@gmail.com").build();
         CustomUserDetails userDetails = new CustomUserDetails(
-                "USER", encoder.encode("user"), Collections.singletonList(new Role(Role.Roles.ROLE_USER)), userMeta);
-        if (userRepo.findByUsername("USER") != null) {
+                "testuser1", encoder.encode("password"), Collections.singletonList(new Role(Role.Roles.ROLE_USER)), userMeta);
+        if (userRepo.findByUsername("testuser1") != null) {
             return;
         }
 
@@ -59,10 +59,10 @@ public class RecipeDataLoader implements CommandLineRunner {
                     .build();
 
             Review review = Review.builder()
-                    .user(userDetails)
                     .description("tasted pretty bad")
-                    .rating(2)
+                    .rating(3)
                     .username("idfk")
+                    .user(userDetails)
                     .build();
 
             Recipe recipe1 = Recipe.builder()
@@ -79,6 +79,14 @@ public class RecipeDataLoader implements CommandLineRunner {
             recipeRepo.save(recipe1);
 
             ingredient.setId(null);
+
+            Review review2 = Review.builder()
+                    .user(userDetails)
+                    .description("tasted pretty bad")
+                    .rating(2)
+                    .username("idfk")
+                    .build();
+
             Recipe recipe2 = Recipe.builder()
                     .user(userDetails)
                     .steps(Set.of(Step.builder()
@@ -133,6 +141,7 @@ public class RecipeDataLoader implements CommandLineRunner {
                             .description("eat both items together")
                             .build()))
                     .reviews(Set.of(Review.builder()
+                            .user(userDetails)
                             .username("ben")
                             .rating(10)
                             .description("this stuff is so good")
