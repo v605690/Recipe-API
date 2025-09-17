@@ -1,10 +1,15 @@
 package com.crus.RecipeAPI.services;
 
+import com.crus.RecipeAPI.CacheManager;
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.ReviewRepo;
+import org.ehcache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +25,11 @@ public class RecipeService {
     @Autowired
     private ReviewRepo reviewRepo;
 
+    @Autowired
+    CacheManager cacheManager;
+
+    Cache<Long, String> myCache = cacheManager.getPreConfigured();
+
     /**
      * Creates and saves a new recipe to the repository after performing validation
      * and generating a location URI for it.
@@ -30,6 +40,7 @@ public class RecipeService {
      * @throws IllegalStateException if the recipe does not pass validation rules
      */
     @Transactional
+    @CachePut(value = "recipes", key = "#recipe.id")
     public Recipe createNewRecipe(Recipe recipe)
         throws IllegalStateException {
         recipe.validate();
@@ -55,6 +66,7 @@ public class RecipeService {
      * @return the recipe object corresponding to the provided ID, with its location URI populated
      * @throws NoSuchRecipeException if no recipe is found with the given ID
      */
+    @Cacheable(value = "recipe", key = "#id", sync = true)
     public Recipe getRecipeById(Long id) throws NoSuchRecipeException {
         Optional<Recipe> recipeOptional = recipeRepo.findById(id);
 
@@ -69,6 +81,7 @@ public class RecipeService {
     }
 
     // get recipes by user
+    @Cacheable(value = "userRecipes", key = "#username", sync = true)
     public List<Recipe> getRecipesByUser(String username) throws NoSuchRecipeException {
         List<Recipe> userRecipes = recipeRepo.findBySubmittedBy(username);
 
@@ -90,6 +103,7 @@ public class RecipeService {
      * @return a list of Recipe objects that match the search criteria
      * @throws NoSuchRecipeException if no recipes are found in the repository
      */
+    @Cacheable(value = "matchRecipes", key = "#name", sync = true)
     public List<Recipe> getRecipesByName(String name) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
 
@@ -119,6 +133,7 @@ public class RecipeService {
     }
 
     // get recipes by name and minimal rating
+    @Cacheable(value = "matchRecipes", key = "#name + '_' + #minAverageRating")
     public List<Recipe> getRecipesByNameAndMinRating(String name, Double minAverageRating) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
 
@@ -163,6 +178,7 @@ public class RecipeService {
      * @throws NoSuchRecipeException if no recipe is found with the given ID or if deletion fails
      */
     @Transactional
+    @CacheEvict(value = "recipes", allEntries = true)
     public Recipe deleteRecipeById(Long id) throws NoSuchRecipeException {
         try {
             Recipe recipe = getRecipeById(id);

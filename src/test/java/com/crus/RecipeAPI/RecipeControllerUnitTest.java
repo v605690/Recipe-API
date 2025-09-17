@@ -61,7 +61,7 @@ public class RecipeControllerUnitTest {
         CustomUserDetails mockUser = TestUtil.createTestUser("testUser1");
 
         Recipe mockRecipe = new Recipe();
-        mockRecipe.setId(16L);
+        mockRecipe.setId(27L);
         mockRecipe.setMinutesToMake(30);
         mockRecipe.setUser(mockUser);
         mockRecipe.setSubmittedBy("testUser1");
@@ -72,7 +72,7 @@ public class RecipeControllerUnitTest {
         when(recipeService.getRecipeById(anyLong()))
                 .thenReturn(mockRecipe);
 
-        final long recipeId = 16;
+        final long recipeId = 27;
 
         mockMvc.perform(get("/recipes/" + recipeId))
                 .andDo(print())
