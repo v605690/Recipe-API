@@ -21,9 +21,9 @@ public class RecipeApiApplication {
     public org.ehcache.CacheManager cacheManager() {
         return newCacheManagerBuilder()
                 .withCache("ownersSearch", newCacheConfigurationBuilder(String.class, Long.class, heap(10)))
-                .withCache("allRecipesCache", newCacheConfigurationBuilder(String.class, List.class, heap(1)))
+                .withCache("allRecipesCache", newCacheConfigurationBuilder(String.class, List.class, heap(100)))
                 .withCache("reviewSearch", newCacheConfigurationBuilder(String.class, Long.class, heap(10)))
-                .withCache("allReviewsCache", newCacheConfigurationBuilder(String.class, List.class, heap(1)))
+                .withCache("allReviewsCache", newCacheConfigurationBuilder(String.class, List.class, heap(100)))
                 .build(true);
     }
 
