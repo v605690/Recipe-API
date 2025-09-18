@@ -4,15 +4,21 @@ import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.ReviewRepo;
+import com.terracottatech.frs.Statistics;
 import org.ehcache.Cache;
+import org.ehcache.CacheManager;
+import org.ehcache.core.internal.statistics.DefaultStatisticsService;
+import org.ehcache.core.spi.service.StatisticsService;
+import org.ehcache.core.statistics.CacheStatistics;
 import org.ehcache.shadow.org.terracotta.offheapstore.paging.OffHeapStorageArea;
 import org.ehcache.shadow.org.terracotta.offheapstore.storage.StorageEngine;
+import org.ehcache.shadow.org.terracotta.statistics.Statistic;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.spec.PSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +34,10 @@ public class RecipeService {
 
     @Autowired
     org.ehcache.CacheManager cacheManager;
+
+    @Autowired
+    StatisticsService statisticsService;
+
 
     private Cache<String, Long> ownersSearch;
     private Cache<String, List> allRecipesCache;
@@ -212,6 +222,10 @@ public class RecipeService {
 
         cacheAllRecipes(processedRecipes);
 
+        CacheStatistics cacheStats = statisticsService.getCacheStatistics("allRecipesCache");
+        System.out.println("Cache Hits: " + cacheStats.getCacheHits());
+        System.out.println("Cache Misses: " + cacheStats.getCacheMisses());
+
         return processedRecipes;
     }
 
@@ -319,4 +333,5 @@ public class RecipeService {
 
         return updateRecipe;
     }
+
 }

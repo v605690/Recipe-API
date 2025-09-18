@@ -1,5 +1,7 @@
 package com.crus.RecipeAPI;
 
+import org.ehcache.core.internal.statistics.DefaultStatisticsService;
+import org.ehcache.core.spi.service.StatisticsService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
@@ -18,8 +20,14 @@ import static org.hibernate.boot.model.process.spi.MetadataBuildingProcess.build
 public class RecipeApiApplication {
 
     @Bean
-    public org.ehcache.CacheManager cacheManager() {
+    public StatisticsService statisticsService() {
+        return new DefaultStatisticsService();
+    }
+
+    @Bean
+    public org.ehcache.CacheManager cacheManager(StatisticsService statisticsService) {
         return newCacheManagerBuilder()
+                .using(statisticsService)
                 .withCache("ownersSearch", newCacheConfigurationBuilder(String.class, Long.class, heap(10)))
                 .withCache("allRecipesCache", newCacheConfigurationBuilder(String.class, List.class, heap(100)))
                 .withCache("reviewSearch", newCacheConfigurationBuilder(String.class, Long.class, heap(10)))
