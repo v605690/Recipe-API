@@ -1,15 +1,15 @@
 package com.crus.RecipeAPI.services;
 
-import com.crus.RecipeAPI.CacheManager;
 import com.crus.RecipeAPI.exceptions.NoSuchRecipeException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.repos.RecipeRepo;
 import com.crus.RecipeAPI.repos.ReviewRepo;
 import org.ehcache.Cache;
+import org.ehcache.shadow.org.terracotta.offheapstore.paging.OffHeapStorageArea;
+import org.ehcache.shadow.org.terracotta.offheapstore.storage.StorageEngine;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +22,70 @@ public class RecipeService {
 
     @Autowired
     RecipeRepo recipeRepo;
+
     @Autowired
     private ReviewRepo reviewRepo;
 
     @Autowired
-    CacheManager cacheManager;
+    org.ehcache.CacheManager cacheManager;
 
-    Cache<Long, String> myCache = cacheManager.getPreConfigured();
+    private Cache<String, Long> ownersSearch;
+    private Cache<String, List> allRecipesCache;
+
+    public RecipeService(org.ehcache.CacheManager cacheManager, ReviewRepo reviewRepo, RecipeRepo recipeRepo) {
+        this.cacheManager = cacheManager;
+        this.reviewRepo = reviewRepo;
+        this.recipeRepo = recipeRepo;
+        Cache<String, Long> ownersSearch;
+        this.ownersSearch = cacheManager.getCache("ownersSearch", String.class, Long.class);
+        this.allRecipesCache = cacheManager.getCache("allRecipes", String.class, List.class);
+    }
+
+    private void cacheRecipeOwner(String username, Long recipeId) {
+        if (ownersSearch != null) {
+            ownersSearch.put(username, recipeId);
+        }
+    }
+
+    private Long getCachedRecipeByOwner(String username) {
+        if (ownersSearch != null) {
+            return ownersSearch.get(username);
+        }
+        return null;
+    }
+
+    private boolean isOwnerCached(String username) {
+        if (ownersSearch != null) {
+            return ownersSearch.containsKey(username);
+        }
+        return false;
+    }
+
+    private void removeFromOwnerCache(String username) {
+        if (ownersSearch != null) {
+            ownersSearch.remove(username);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Recipe> getAllRecipesFromCache() {
+        if (allRecipesCache != null) {
+            return (List<Recipe>) allRecipesCache.get("all_recipes_key");
+        }
+        return null;
+    }
+
+    private void cacheAllRecipes(List<Recipe> recipes) {
+        if (allRecipesCache != null) {
+            allRecipesCache.put("all_recipes_key", recipes);
+        }
+    }
+
+    private void clearAllRecipesCache() {
+        if (allRecipesCache != null) {
+            allRecipesCache.remove("all_recipes_key");
+        }
+    }
 
     /**
      * Creates and saves a new recipe to the repository after performing validation
@@ -40,7 +97,6 @@ public class RecipeService {
      * @throws IllegalStateException if the recipe does not pass validation rules
      */
     @Transactional
-    @CachePut(value = "recipes", key = "#recipe.id")
     public Recipe createNewRecipe(Recipe recipe)
         throws IllegalStateException {
         recipe.validate();
@@ -55,6 +111,9 @@ public class RecipeService {
 
         recipe = recipeRepo.save(recipe);
         recipe.generateLocationURI();
+
+        cacheRecipeOwner(recipe.getSubmittedBy(), recipe.getId());
+
         return recipe;
     }
 
@@ -66,7 +125,7 @@ public class RecipeService {
      * @return the recipe object corresponding to the provided ID, with its location URI populated
      * @throws NoSuchRecipeException if no recipe is found with the given ID
      */
-    @Cacheable(value = "recipe", key = "#id", sync = true)
+
     public Recipe getRecipeById(Long id) throws NoSuchRecipeException {
         Optional<Recipe> recipeOptional = recipeRepo.findById(id);
 
@@ -81,7 +140,7 @@ public class RecipeService {
     }
 
     // get recipes by user
-    @Cacheable(value = "userRecipes", key = "#username", sync = true)
+
     public List<Recipe> getRecipesByUser(String username) throws NoSuchRecipeException {
         List<Recipe> userRecipes = recipeRepo.findBySubmittedBy(username);
 
@@ -103,7 +162,7 @@ public class RecipeService {
      * @return a list of Recipe objects that match the search criteria
      * @throws NoSuchRecipeException if no recipes are found in the repository
      */
-    @Cacheable(value = "matchRecipes", key = "#name", sync = true)
+
     public List<Recipe> getRecipesByName(String name) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
 
@@ -119,21 +178,30 @@ public class RecipeService {
     }
 
     public List<Recipe> getAllRecipes() throws NoSuchRecipeException {
+
+        List<Recipe> cachedRecipes = getAllRecipesFromCache();
+        if (cachedRecipes != null && !cachedRecipes.isEmpty()) {
+            return cachedRecipes;
+        }
+
         List<Recipe> recipes = recipeRepo.findAll();
 
         if (recipes.isEmpty()) {
             throw new NoSuchRecipeException("There are no recipes yet :( feel free to add one.");
         }
-        return recipes.stream()
+        List<Recipe> processedRecipes = recipes.stream()
                 .map(recipe -> {
                     recipe.generateLocationURI();
                     return recipe.recipeWithAverageRating(recipe);
                 })
                 .collect(Collectors.toList());
+
+        cacheAllRecipes(processedRecipes);
+
+        return processedRecipes;
     }
 
     // get recipes by name and minimal rating
-    @Cacheable(value = "matchRecipes", key = "#name + '_' + #minAverageRating")
     public List<Recipe> getRecipesByNameAndMinRating(String name, Double minAverageRating) throws NoSuchRecipeException {
         List<Recipe> matchingRecipes = recipeRepo.findByNameContaining(name);
 
@@ -178,10 +246,12 @@ public class RecipeService {
      * @throws NoSuchRecipeException if no recipe is found with the given ID or if deletion fails
      */
     @Transactional
-    @CacheEvict(value = "recipes", allEntries = true)
     public Recipe deleteRecipeById(Long id) throws NoSuchRecipeException {
         try {
             Recipe recipe = getRecipeById(id);
+
+            removeFromOwnerCache(recipe.getSubmittedBy());
+
             recipeRepo.deleteById(id);
             return recipe;
         } catch (NoSuchRecipeException e) {
