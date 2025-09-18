@@ -5,6 +5,8 @@ import com.crus.RecipeAPI.exceptions.NoSuchReviewException;
 import com.crus.RecipeAPI.models.Recipe;
 import com.crus.RecipeAPI.models.Review;
 import com.crus.RecipeAPI.repos.ReviewRepo;
+import org.ehcache.Cache;
+import org.ehcache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,29 @@ public class ReviewService {
     @Autowired
     private RecipeService recipeService;
 
+    @Autowired
+    org.ehcache.CacheManager cacheManager;
+
+    private Cache<String, Long> reviewSearch;
+    private Cache<String, List> allReviewsCache;
+
+    public ReviewService(ReviewRepo reviewRepo, RecipeService recipeService, CacheManager cacheManager) {
+        this.reviewRepo = reviewRepo;
+        this.recipeService = recipeService;
+        this.cacheManager = cacheManager;
+        Cache<String, Long> reviewSearch;
+        Cache<String, List> allReviewsCache;
+        this.reviewSearch = cacheManager.getCache("reviewSearch", String.class, Long.class);
+        this.allReviewsCache = cacheManager.getCache("allReviewsCache", String.class, List.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Review> getAllReviewsFromCache() {
+        if (allReviewsCache != null) {
+            return (List<Review>) allReviewsCache.get("all_reviews_key");
+        }
+        return null;
+    }
 
     /**
      1. **Method Signature**:
@@ -210,6 +235,7 @@ public class ReviewService {
     }
 
     public List<Review> getAllReviews() {
-       return reviewRepo.findAll();
+
+        return reviewRepo.findAll();
     }
 }

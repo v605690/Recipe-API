@@ -37,8 +37,9 @@ public class RecipeService {
         this.reviewRepo = reviewRepo;
         this.recipeRepo = recipeRepo;
         Cache<String, Long> ownersSearch;
+        Cache<String, List> allRecipesCache;
         this.ownersSearch = cacheManager.getCache("ownersSearch", String.class, Long.class);
-        this.allRecipesCache = cacheManager.getCache("allRecipes", String.class, List.class);
+        this.allRecipesCache = cacheManager.getCache("allRecipesCache", String.class, List.class);
     }
 
     private void cacheRecipeOwner(String username, Long recipeId) {
@@ -114,6 +115,8 @@ public class RecipeService {
 
         cacheRecipeOwner(recipe.getSubmittedBy(), recipe.getId());
 
+        clearAllRecipesCache();
+
         return recipe;
     }
 
@@ -142,11 +145,21 @@ public class RecipeService {
     // get recipes by user
 
     public List<Recipe> getRecipesByUser(String username) throws NoSuchRecipeException {
+
+        Long cachedRecipeId = getCachedRecipeByOwner(username);
+        if (cachedRecipeId != null) {}
+
         List<Recipe> userRecipes = recipeRepo.findBySubmittedBy(username);
 
         if (userRecipes.isEmpty()) {
             throw new NoSuchRecipeException("No recipes found for user: " + username);
         }
+
+        if (!userRecipes.isEmpty()) {
+            Recipe mostRecentRecipe = userRecipes.get(0);
+            cacheRecipeOwner(username, mostRecentRecipe.getId());
+        }
+
         return userRecipes.stream()
                 .map(recipe -> {
                    recipe.generateLocationURI();
@@ -180,6 +193,7 @@ public class RecipeService {
     public List<Recipe> getAllRecipes() throws NoSuchRecipeException {
 
         List<Recipe> cachedRecipes = getAllRecipesFromCache();
+        System.out.println("Get All Cached Recipes");
         if (cachedRecipes != null && !cachedRecipes.isEmpty()) {
             return cachedRecipes;
         }
@@ -249,10 +263,10 @@ public class RecipeService {
     public Recipe deleteRecipeById(Long id) throws NoSuchRecipeException {
         try {
             Recipe recipe = getRecipeById(id);
-
-            removeFromOwnerCache(recipe.getSubmittedBy());
-
             recipeRepo.deleteById(id);
+
+            clearAllRecipesCache();
+
             return recipe;
         } catch (NoSuchRecipeException e) {
             throw new NoSuchRecipeException(
@@ -282,6 +296,9 @@ public class RecipeService {
             recipe.validate();
             Recipe savedRecipe = recipeRepo.save(recipe);
             savedRecipe.generateLocationURI();
+
+            clearAllRecipesCache();
+
             return savedRecipe;
         } catch (NoSuchRecipeException e) {
             throw new NoSuchRecipeException("The recipe you passed in did not have an ID found " +
@@ -297,6 +314,9 @@ public class RecipeService {
         recipe.setDifficultyRating(newDifficultyRating);
         Recipe updateRecipe = recipeRepo.save(recipe);
         updateRecipe.generateLocationURI();
+
+        clearAllRecipesCache();
+
         return updateRecipe;
     }
 }
