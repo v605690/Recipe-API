@@ -39,8 +39,8 @@ public class RecipeService {
     StatisticsService statisticsService;
 
 
-    private Cache<String, Long> ownersSearch;
-    private Cache<String, List> allRecipesCache;
+    private final Cache<String, Long> ownersSearch;
+    private final Cache<String, List> allRecipesCache;
 
     public RecipeService(org.ehcache.CacheManager cacheManager, ReviewRepo reviewRepo, RecipeRepo recipeRepo) {
         this.cacheManager = cacheManager;
