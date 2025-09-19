@@ -7,6 +7,8 @@ import com.crus.RecipeAPI.models.Review;
 import com.crus.RecipeAPI.repos.ReviewRepo;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
+import org.ehcache.core.spi.service.StatisticsService;
+import org.ehcache.core.statistics.CacheStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,9 @@ public class ReviewService {
 
     @Autowired
     org.ehcache.CacheManager cacheManager;
+
+    @Autowired
+    StatisticsService statisticsService;
 
     private Cache<String, Long> reviewSearch;
     private Cache<String, List> allReviewsCache;
@@ -44,6 +49,12 @@ public class ReviewService {
             return (List<Review>) allReviewsCache.get("all_reviews_key");
         }
         return null;
+    }
+
+    private void cacheAllReviews(List<Review> reviews) {
+        if (allReviewsCache != null) {
+            allReviewsCache.put("all_reviews_key", reviews);
+        }
     }
 
     /**
@@ -234,8 +245,29 @@ public class ReviewService {
         return reviewToUpdate;
     }
 
-    public List<Review> getAllReviews() {
+    public List<Review> getAllReviews() throws NoSuchReviewException {
 
-        return reviewRepo.findAll();
+        List<Review> cachedReviews = getAllReviewsFromCache();
+        System.out.println("Get All Cached Reviews");
+        if (cachedReviews != null) {
+            return cachedReviews;
+        }
+
+        List<Review> reviews = reviewRepo.findAll();
+        if (reviews.isEmpty()) {
+            throw new NoSuchReviewException("There are no reviews posted.");
+        }
+        List<Integer> processedReviews = reviews.stream()
+                .map(Review::getRating)
+                .toList();
+
+        cacheAllReviews(reviews);
+
+        CacheStatistics cacheStats = statisticsService.getCacheStatistics("allReviewsCache");
+        System.out.println("Cache Hits: " + cacheStats.getCacheHits());
+        System.out.println("Cache Misses: " + cacheStats.getCacheMisses());
+        System.out.println(cacheStats.getCacheHitPercentage());
+
+        return reviews;
     }
 }

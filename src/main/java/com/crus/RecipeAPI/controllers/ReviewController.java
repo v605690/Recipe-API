@@ -40,6 +40,8 @@ public class ReviewController {
             return ResponseEntity.ok(allReviews);
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (NoSuchReviewException e) {
+            throw new RuntimeException(e);
         }
     }
 

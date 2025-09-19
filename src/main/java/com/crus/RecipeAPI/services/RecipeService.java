@@ -209,7 +209,6 @@ public class RecipeService {
         }
 
         List<Recipe> recipes = recipeRepo.findAll();
-
         if (recipes.isEmpty()) {
             throw new NoSuchRecipeException("There are no recipes yet :( feel free to add one.");
         }
@@ -225,6 +224,7 @@ public class RecipeService {
         CacheStatistics cacheStats = statisticsService.getCacheStatistics("allRecipesCache");
         System.out.println("Cache Hits: " + cacheStats.getCacheHits());
         System.out.println("Cache Misses: " + cacheStats.getCacheMisses());
+        System.out.println(cacheStats.getCacheHitPercentage());
 
         return processedRecipes;
     }
